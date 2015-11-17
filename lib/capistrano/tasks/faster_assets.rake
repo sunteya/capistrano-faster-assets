@@ -4,6 +4,11 @@
 # set the locations that we will look for changed assets to determine whether to precompile
 set :assets_dependencies, %w(app/assets lib/assets vendor/assets Gemfile.lock config/routes.rb)
 
+# set the command for precompile
+set :assets_precompile_command, -> (context) {
+  context.execute(:rake, "assets:precompile")
+}
+
 # clear the previous precompile task
 Rake::Task["deploy:assets:precompile"].clear_actions
 class PrecompileRequired < StandardError;
@@ -44,7 +49,7 @@ namespace :deploy do
               # copy over all of the assets from the last release
               execute(:cp, '-r', latest_release_path.join('public', fetch(:assets_prefix)), release_path.join('public', fetch(:assets_prefix)))
             rescue PrecompileRequired
-              execute(:rake, "assets:precompile")
+              fetch(:assets_precompile_command).call(self)
             end
           end
         end
